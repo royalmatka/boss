@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalyan Chart</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #ffffff !important;
+            margin: 0;
+            padding: 5px;
+            text-align: center;
+        }
+        /* चार्ट का नाम (Title) */
+        h2.chart-title {
+            color: #800080;
+            margin-top: 15px;
+            margin-bottom: 15px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0 auto;
+            background-color: #ffffff !important;
+            border: 2px solid #800080 !important; /* पर्पल बॉर्डर */
+        }
+        th, td {
+            border: 1px solid #800080 !important;
+            padding: 8px 2px;
+            font-size: 17px;
+            text-align: center;
+            font-weight: 900;
+            background-color: #ffffff !important;
+        }
+        th {
+            background-color: #f8f9fa !important;
+            color: #800080;
+            font-size: 14px;
+        }
+        .date-col {
+            color: #333333 !important;
+            font-size: 10px;
+            font-weight: bold;
+            width: 60px;
+            line-height: 1.2;
+            padding: 4px 1px;
+            vertical-align: middle;
+        }
+        /* नॉर्मल नंबर (सिर्फ काले) */
+        .normal-num {
+            color: #000000 !important;
+        }
+        /* रेड जोड़ी (सिर्फ लाल) */
+        .red-num {
+            color: #ff0000 !important;
+        }
+        /* डैश और खाली जगह */
+        .dash-num {
+            color: #000000 !important;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- सबसे ऊपर चार्ट का नाम -->
+    <h2 class="chart-title">Kalyan Chart</h2>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Mon</th>
+                    <th>Tue</th>
+                    <th>Wed</th>
+                    <th>Thu</th>
+                    <th>Fri</th>
+                    <th>Sat</th>
+                </tr>
+            </thead>
+            <!-- एडमिन पैनल का डेटा और बॉक्स यहाँ जावास्क्रिप्ट (JS) द्वारा अपने आप जनरेट होंगे -->
+            <tbody id="auto-chart-body">
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // 1. आपका पूरा डेटा (Kalyan - 6 Days a week)
+        const baseData = [
+            "81","88","88","41","48","77",
+            "44","85","28","72","36","13",
+            "68","10","05","71","82","61",
+            "05","08","76","67","03","58",
+            "06","11","09","09","68","69",
+            "83","91","75","42","**","72",
+            "54","75","14","39","68","43",
+            "68","73","20","05","40","38",
+            "25","75","61","43","17","24",
+            "14","63","87","01","51","58",
+            "99","42","44","16","56","38",
+            "52","58","49","69","79","71",
+            "71","79","73","87","80","19",
+            "12","96","79","36","84","97",
+            "40","85","95","31","15","**",
+            "**","**","**","**","**","**",
+            "59","44","59","42","90","08",
+            "55","02","23","00","05","27",
+            "91","16","84","20","84","47",
+            "52","96","53","11","70","82",
+            "91","97","67","79","09","87",
+            "78","52","12","72","64","17",
+            "16","43","78","91","27","30",
+            "64","30","97","55","97","39",
+            "33","38","53","32","84","82",
+            "60","57","36","94","52","68",
+            "04","46","65","04","04","74",
+            "77","51","04","34","55","42",
+            "02","39","06","67","69","54",
+            "**","76","59","35","12","70",
+            "91","78","82","20","54","65",
+            "77","00","36","25","88","27",
+            "94","31","55","49","18","15",
+            "97","49","71","17","12","33",
+            "13","94","**","90","56","63",
+            "70","21","30","88","15","54",
+            "58","13","72","25","06","82",
+            "17","59","42","51","77","11",
+            "74","04","19","16","50","26",
+            "51","76","56","51","96","28",
+            "30","03","77","53","89","33",
+            "53","52","48","04","83","79",
+            "79","98","75","37","97","68",
+            "95","13","95","51","34","18",
+            "14","14","32","20","93","78",
+            "89","64","31","24","00","13",
+            "72","71","21","75","01","95",
+            "02","38","31","83","80","50",
+            "92","62","95","30","78","17",
+            "50","23","02","13","96","92",
+            "08","34","57","21","93","97",
+            "34","06","94","06","03","49",
+            "95","75","69","14","64","96",
+            "74","01","14","45","81","62",
+            "31","31","78","00","04","74",
+            "26" // <--- जब नया नंबर आए, तो यहाँ कॉमा (,) लगाकर अगला नंबर लिख देना
+        ];
+
+        // 2. एडमिन पैनल का डेटाबेस नाम (कल्याण के लिए खास नाम 'kalyanAdminData' रखा गया है)
+        let adminData = JSON.parse(localStorage.getItem('kalyanAdminData')) || [];
+        let allData = baseData.concat(adminData);
+
+        // 3. 6-दिन वाले चार्ट का ऑटोमैटिक जनरेटर
+        function generateDynamicChart() {
+            const tbody = document.getElementById('auto-chart-body');
+            tbody.innerHTML = '';
+            
+            // शुरू होने की तारीख (07 जुलाई 2025)
+            // (महीना 0 से शुरू होता है इसलिए जुलाई = 6)
+            let startDate = new Date(2025, 6, 7); 
+
+            // लूप को 6-6 दिन के हिसाब से चलाया है (क्योंकि यह 6 दिन का गेम है)
+            for (let i = 0; i < allData.length; i += 6) {
+                let tr = document.createElement('tr');
+
+                // ऑटोमैटिक डेट (Date) बनाना (हफ्ता 7 दिन का ही गिना जाएगा, लेकिन खेल 6 दिन होगा)
+                let weekStart = new Date(startDate);
+                weekStart.setDate(weekStart.getDate() + (i / 6) * 7);
+                let weekEnd = new Date(weekStart);
+                
+                // 6 दिन के गेम में हफ्ता शनिवार को खत्म होता है, इसलिए +5 दिन जोड़े हैं
+                weekEnd.setDate(weekStart.getDate() + 5); 
+
+                let startStr = ('0' + weekStart.getDate()).slice(-2) + '/' + ('0' + (weekStart.getMonth()+1)).slice(-2) + '/' + String(weekStart.getFullYear()).slice(-2);
+                let endStr = ('0' + weekEnd.getDate()).slice(-2) + '/' + ('0' + (weekEnd.getMonth()+1)).slice(-2) + '/' + String(weekEnd.getFullYear()).slice(-2);
+
+                let tdDate = document.createElement('td');
+                tdDate.className = 'date-col';
+                tdDate.innerHTML = startStr + '<br>to<br>' + endStr;
+                tr.appendChild(tdDate);
+
+                // सोमवार से शनिवार (6 दिन) के बॉक्स
+                for (let j = 0; j < 6; j++) {
+                    let val = allData[i + j];
+                    let td = document.createElement('td');
+                    let span = document.createElement('span');
+
+                    if (val === undefined || val === '' || val === '--') {
+                        span.innerText = '--';
+                        span.className = 'dash-num';
+                    } else if (val === '**') {
+                        span.innerText = val;
+                        span.className = 'red-num';
+                    } else {
+                        span.innerText = val;
+                        // ऑटोमैटिक रेड जोड़ी (0 या 5 का अंतर) पकड़ने का लॉजिक
+                        if (val.length === 2 && !isNaN(val)) {
+                            let diff = Math.abs(parseInt(val[0]) - parseInt(val[1]));
+                            if (diff === 0 || diff === 5) {
+                                span.className = 'red-num';
+                            } else {
+                                span.className = 'normal-num';
+                            }
+                        } else {
+                            span.className = 'normal-num';
+                        }
+                    }
+                    td.appendChild(span);
+                    tr.appendChild(td);
+                }
+                tbody.appendChild(tr);
+            }
+        }
+
+        // चार्ट को लोड करना
+        generateDynamicChart();
+    </script>
+
+</body>
+</html>

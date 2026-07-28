@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalyan Morning Chart</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #ffffff !important;
+            margin: 0;
+            padding: 5px;
+            text-align: center;
+        }
+        h2.chart-title {
+            color: #800080;
+            margin-top: 15px;
+            margin-bottom: 15px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0 auto;
+            background-color: #ffffff !important;
+            border: 2px solid #800080 !important;
+        }
+        th, td {
+            border: 1px solid #800080 !important;
+            padding: 8px 2px;
+            font-size: 17px;
+            text-align: center;
+            font-weight: 900;
+            background-color: #ffffff !important;
+        }
+        th {
+            background-color: #f8f9fa !important;
+            color: #800080;
+            font-size: 14px;
+        }
+        .date-col {
+            color: #333333 !important;
+            font-size: 10px;
+            font-weight: bold;
+            width: 60px;
+            line-height: 1.2;
+            padding: 4px 1px;
+            vertical-align: middle;
+        }
+        .normal-num {
+            color: #000000 !important;
+        }
+        .red-num {
+            color: #ff0000 !important;
+        }
+        .dash-num {
+            color: #000000 !important;
+        }
+    </style>
+</head>
+<body>
+
+    <h2 class="chart-title">Kalyan Morning Chart</h2>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th>
+                </tr>
+            </thead>
+            <!-- एडमिन पैनल का डेटा और बॉक्स यहाँ जावास्क्रिप्ट (JS) द्वारा अपने आप जनरेट होंगे -->
+            <tbody id="auto-chart-body">
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // 1. आपका पुराना सारा डेटा (Historical Data) 
+        // यहाँ कॉमा (,) लगाकर नंबर रखे गए हैं, आप बस सबसे नीचे नया नंबर जोड़ते जाना।
+        const baseData = [
+            "25","78","01","13","71","13","02",
+            "53","47","68","19","79","26","45",
+            "48","92","81","71","12","41","23",
+            "73","17","69","93","79","69","96",
+            "57","40","63","48","91","51","98",
+            "68","01","86","97","28","48","04",
+            "37","04","11","25","54","88","34",
+            "65","06","54","19","55","34","92",
+            "42","23","32","24","83","49","51",
+            "53","71","32","89","42","22","60",
+            "53","65","04","51","54","17","67",
+            "48","33","78","93","70","89","99",
+            "76","54","89","15","96","32","08",
+            "33","31","15","40","87","91","67",
+            "69","92","64","86","16","85","22",
+            "**","20","37","84","99","31","71",
+            "89","77","51","52","84","20","92",
+            "62","40","66","81","41","26","02",
+            "06","27","81","47","67","17","34",
+            "42","85","17","10","79","09","80",
+            "74","61","29","92","27","62","94",
+            "25","81","09","23","85","23","70",
+            "61","38","10","85","43","36","69",
+            "21","67","27","87","41","86","47",
+            "84","21","07","31","50","31","32",
+            "89","00","23","39","92","97","02",
+            "05","41","81","12","83","90","62",
+            "93","26","53","59","02","66","88",
+            "26","03","32","81","60","98","15",
+            "**","65","12","65","60","84","50",
+            "49","95","45","81","42","42","32",
+            "11","95","12","02","45","17","79",
+            "12","92","13","40","96","93","41",
+            "92","05","21","15","39","11","97",
+            "94","23","**","31","91","10","37",
+            "20","68","91","21","07","33","32",
+            "40","92","02","20","13","20","39",
+            "32","14","88","00","80","79","32",
+            "24","26","12","24","01","29","59",
+            "82","97","89","36","52","81","10",
+            "28","97","52","56","01","04","36",
+            "01","13","62","38","46","31","80",
+            "34","62","37","37","52","34","95",
+            "52","15","91","15","82","14","64",
+            "93","13","91","97","67","97","55",
+            "98","04","36","98","58","52","03",
+            "59","38","40","26","78","37","02",
+            "90","94","60","28","22","71","12",
+            "37","81","62","65","83","30","65",
+            "29","89","42","22","92","76","88",
+            "63","24","94","28","80","80","40",
+            "61","74","62","71","91","63","90",
+            "92","46","75","20","97","90","42",
+            "97","22","75","60","63","74","39",
+            "85","68","84","04","83","72","41",
+            "48" // <--- जब नया नंबर आए, तो यहाँ कॉमा (,) लगाकर अगला नंबर लिख देना
+        ];
+
+        // 2. एडमिन पैनल का डेटा (अगर लोकल स्टोरेज से आ रहा है)
+        let adminData = JSON.parse(localStorage.getItem('kalyanMorningAdminData')) || [];
+        let allData = baseData.concat(adminData);
+
+        // 3. तारीख और बॉक्स को ऑटोमैटिक बनाने का फंक्शन
+        function generateDynamicChart() {
+            const tbody = document.getElementById('auto-chart-body');
+            tbody.innerHTML = '';
+            
+            for (let i = 0; i < allData.length; i += 7) {
+                let tr = document.createElement('tr');
+
+                // शुरू होने की तारीख (07 जुलाई 2025)
+                // (साल, महीना 0 से शुरू होता है इसलिए 6, तारीख 7)
+                let weekStart = new Date(2025, 6, 7); 
+                weekStart.setDate(weekStart.getDate() + i); 
+                
+                let weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekStart.getDate() + 6);
+
+                let startStr = ('0' + weekStart.getDate()).slice(-2) + '/' + ('0' + (weekStart.getMonth()+1)).slice(-2) + '/' + String(weekStart.getFullYear()).slice(-2);
+                let endStr = ('0' + weekEnd.getDate()).slice(-2) + '/' + ('0' + (weekEnd.getMonth()+1)).slice(-2) + '/' + String(weekEnd.getFullYear()).slice(-2);
+
+                let tdDate = document.createElement('td');
+                tdDate.className = 'date-col';
+                tdDate.innerHTML = startStr + '<br>to<br>' + endStr;
+                tr.appendChild(tdDate);
+
+                // 7 दिन के ऑटोमैटिक बॉक्स
+                for (let j = 0; j < 7; j++) {
+                    let val = allData[i + j];
+                    let td = document.createElement('td');
+                    let span = document.createElement('span');
+
+                    // अगर नंबर नहीं है (हफ्ता पूरा नहीं हुआ) तो डब्बा खाली न रहे
+                    if (val === undefined || val === '' || val === '--') {
+                        span.innerText = '--';
+                        span.className = 'dash-num';
+                    } else if (val === '**') {
+                        span.innerText = val;
+                        span.className = 'red-num';
+                    } else {
+                        span.innerText = val;
+                        
+                        // ऑटोमैटिक रेड जोड़ी (Red Jodi) पकड़ने का पक्का लॉजिक
+                        if (val.length === 2 && !isNaN(val)) {
+                            let diff = Math.abs(parseInt(val[0]) - parseInt(val[1]));
+                            if (diff === 0 || diff === 5) {
+                                span.className = 'red-num';
+                            } else {
+                                span.className = 'normal-num';
+                            }
+                        } else {
+                            span.className = 'normal-num';
+                        }
+                    }
+                    td.appendChild(span);
+                    tr.appendChild(td);
+                }
+                tbody.appendChild(tr);
+            }
+        }
+
+        // चार्ट को लोड करना
+        generateDynamicChart();
+    </script>
+
+</body>
+</html>
