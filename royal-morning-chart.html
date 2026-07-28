@@ -14,154 +14,125 @@
         th { background-color: #512da8; color: #ffffff; font-size: 15px; font-weight: bold; }
         .date-col { background-color: #f3e5f5; color: #333333; font-size: 11px; font-weight: bold; line-height: 1.3; width: 18%; }
         .jodi-cell { font-size: 20px; font-weight: bold; width: 13.6%; }
-        /* ऑटोमैटिक लाल रंग के लिए क्लास */
         .red { color: #d32f2f; }
-        /* नॉर्मल काले रंग के लिए क्लास */
         .normal { color: #000000; }
         .dash { color: #d32f2f; }
     </style>
 </head>
 <body>
-
     <div class="header-title">ROYAL MORNING JODI CHART</div>
-
     <div class="table-container">
-        <!-- यह टेबल JavaScript से खुद-ब-खुद (ऑटोमैटिक) बनेगी -->
-        <table id="matkaChart">
+        <table>
             <thead>
                 <tr>
                     <th>Date</th>
-                    <th>Mon</th>
-                    <th>Tue</th>
-                    <th>Wed</th>
-                    <th>Thu</th>
-                    <th>Fri</th>
-                    <th>Sat</th>
+                    <th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th>
                 </tr>
             </thead>
-            <tbody>
-                <!-- डेटा यहाँ लोड होगा -->
-            </tbody>
+            <tbody id="auto-chart-body"></tbody>
         </table>
     </div>
 
     <script>
-        // आपके दिए हुए सारे नंबरों की लिस्ट
-        const chartData = [
-            ["95", "12", "13", "72", "05", "06"],
-            ["28", "98", "69", "36", "24", "66"],
-            ["28", "54", "83", "99", "64", "83"],
-            ["60", "10", "44", "74", "54", "58"],
-            ["22", "03", "98", "45", "77", "05"],
-            ["31", "87", "37", "18", "42", "78"],
-            ["70", "73", "60", "89", "93", "87"],
-            ["87", "86", "42", "01", "88", "91"],
-            ["38", "18", "80", "63", "53", "44"],
-            ["13", "15", "60", "13", "09", "67"],
-            ["38", "09", "00", "25", "21", "09"],
-            ["54", "43", "84", "42", "59", "32"],
-            ["74", "26", "19", "91", "48", "70"],
-            ["04", "73", "95", "87", "95", "43"],
-            ["21", "38", "14", "86", "93", "46"],
-            ["**", "**", "**", "**", "**", "**"],
-            ["87", "30", "94", "00", "87", "44"],
-            ["28", "05", "87", "19", "81", "16"],
-            ["74", "80", "70", "32", "99", "04"],
-            ["39", "03", "25", "09", "94", "84"],
-            ["70", "12", "30", "33", "71", "03"],
-            ["88", "16", "44", "21", "05", "47"],
-            ["73", "36", "43", "76", "28", "31"],
-            ["40", "65", "34", "38", "31", "69"],
-            ["31", "73", "90", "64", "53", "67"],
-            ["30", "89", "22", "88", "34", "59"],
-            ["91", "01", "62", "48", "66", "67"],
-            ["99", "62", "00", "03", "58", "07"],
-            ["77", "74", "57", "51", "99", "65"],
-            ["**", "32", "39", "85", "22", "56"],
-            ["83", "20", "83", "07", "77", "97"],
-            ["23", "08", "26", "41", "32", "43"],
-            ["62", "33", "92", "94", "79", "93"],
-            ["40", "46", "06", "90", "74", "76"],
-            ["68", "87", "**", "69", "84", "53"],
-            ["68", "53", "02", "20", "36", "25"],
-            ["01", "97", "54", "06", "92", "81"],
-            ["80", "30", "43", "43", "39", "83"],
-            ["48", "37", "09", "52", "25", "95"],
-            ["17", "21", "52", "15", "18", "39"],
-            ["18", "85", "10", "28", "90", "20"],
-            ["72", "84", "39", "86", "62", "38"],
-            ["42", "50", "94", "82", "46", "81"],
-            ["84", "68", "27", "99", "57", "17"],
-            ["67", "44", "76", "60", "66", "00"],
-            ["97", "51", "68", "66", "40", "12"],
-            ["04", "59", "64", "23", "27", "87"],
-            ["04", "01", "66", "40", "17", "77"],
-            ["08", "58", "10", "08", "65", "51"],
-            ["95", "73", "13", "00", "38", "28"],
-            ["73", "58", "83", "**", "**", "**"],
-            ["57", "**", "**", "**", "**", "00"],
-            ["15", "85", "25", "**", "82", "**"],
-            ["67", "42", "14", "89", "14", "94"],
-            ["52", "05", "39", "75", "06", "24"]
+        const baseData = [
+            "95", "12", "13", "72", "05", "06", "28", "98", "69", "36", "24", "66",
+            "28", "54", "83", "99", "64", "83", "60", "10", "44", "74", "54", "58",
+            "22", "03", "98", "45", "77", "05", "31", "87", "37", "18", "42", "78",
+            "70", "73", "60", "89", "93", "87", "87", "86", "42", "01", "88", "91",
+            "38", "18", "80", "63", "53", "44", "13", "15", "60", "13", "09", "67",
+            "38", "09", "00", "25", "21", "09", "54", "43", "84", "42", "59", "32",
+            "74", "26", "19", "91", "48", "70", "04", "73", "95", "87", "95", "43",
+            "21", "38", "14", "86", "93", "46", "**", "**", "**", "**", "**", "**",
+            "87", "30", "94", "00", "87", "44", "28", "05", "87", "19", "81", "16",
+            "74", "80", "70", "32", "99", "04", "39", "03", "25", "09", "94", "84",
+            "70", "12", "30", "33", "71", "03", "88", "16", "44", "21", "05", "47",
+            "73", "36", "43", "76", "28", "31", "40", "65", "34", "38", "31", "69",
+            "31", "73", "90", "64", "53", "67", "30", "89", "22", "88", "34", "59",
+            "91", "01", "62", "48", "66", "67", "99", "62", "00", "03", "58", "07",
+            "77", "74", "57", "51", "99", "65", "**", "32", "39", "85", "22", "56",
+            "83", "20", "83", "07", "77", "97", "23", "08", "26", "41", "32", "43",
+            "62", "33", "92", "94", "79", "93", "40", "46", "06", "90", "74", "76",
+            "68", "87", "**", "69", "84", "53", "68", "53", "02", "20", "36", "25",
+            "01", "97", "54", "06", "92", "81", "80", "30", "43", "43", "39", "83",
+            "48", "37", "09", "52", "25", "95", "17", "21", "52", "15", "18", "39",
+            "18", "85", "10", "28", "90", "20", "72", "84", "39", "86", "62", "38",
+            "42", "50", "94", "82", "46", "81", "84", "68", "27", "99", "57", "17",
+            "67", "44", "76", "60", "66", "00", "97", "51", "68", "66", "40", "12",
+            "04", "59", "64", "23", "27", "87", "04", "01", "66", "40", "17", "77",
+            "08", "58", "10", "08", "65", "51", "95", "73", "13", "00", "38", "28",
+            "73", "58", "83", "**", "**", "**", "57", "**", "**", "**", "**", "00",
+            "15", "85", "25", "**", "82", "**", "67", "42", "14", "89", "14", "94",
+            "52", "05", "39", "75", "06", "24"
         ];
 
-        // स्टार्टिंग डेट (11/05/2026 - सोमवार)
-        let currentDate = new Date(2026, 4, 11); 
+        const databaseURL = "https://sbboss-75e3f-default-rtdb.firebaseio.com";
+        const gameName = "royal-morning"; 
+        const daysInWeek = 6; 
+        const startDate = new Date(2026, 4, 11); // आपका वाला 11/05/2026
+        let allData = [...baseData]; 
 
-        // डेट का फॉर्मेट DD/MM/YY बनाने का फंक्शन
-        function formatDate(dateObj) {
-            let d = dateObj.getDate().toString().padStart(2, '0');
-            let m = (dateObj.getMonth() + 1).toString().padStart(2, '0');
-            let y = dateObj.getFullYear().toString().slice(-2);
-            return `${d}/${m}/${y}`;
+        function extractJodi(fullResult) {
+            if (!fullResult || fullResult === "**" || fullResult.includes("***")) return "**";
+            let parts = fullResult.split('-');
+            if (parts.length === 3) return parts[1]; 
+            if (parts.length === 1) return parts[0]; 
+            return fullResult; 
         }
 
-        // 100% सही रेड जोड़ी पहचानने का नियम (अंतर 0 या 5)
-        function isRedJodi(jodi) {
-            if (jodi === "**" || jodi.trim() === "") return false;
-            let d1 = parseInt(jodi.charAt(0));
-            let d2 = parseInt(jodi.charAt(1));
-            if (isNaN(d1) || isNaN(d2)) return false;
-            
-            let diff = Math.abs(d1 - d2);
-            return (diff === 0 || diff === 5); // यही नियम हर जोड़ी पर लगेगा
-        }
-
-        const tbody = document.querySelector("#matkaChart tbody");
-
-        // ऑटोमैटिक टेबल जनरेट करना
-        chartData.forEach(week => {
-            let tr = document.createElement("tr");
-
-            // 1. डेट वाला कॉलम बनाना
-            let weekEndDate = new Date(currentDate);
-            weekEndDate.setDate(currentDate.getDate() + 5); // सोमवार से शनिवार (5 दिन)
-            
-            let tdDate = document.createElement("td");
-            tdDate.className = "date-col";
-            tdDate.innerHTML = `${formatDate(currentDate)}<br>to<br>${formatDate(weekEndDate)}`;
-            tr.appendChild(tdDate);
-
-            // 2. जोड़ियों के कॉलम बनाना और ऑटोमैटिक कलर देना
-            week.forEach(jodi => {
-                let tdJodi = document.createElement("td");
-                
-                if (jodi === "**") {
-                    tdJodi.className = "jodi-cell dash";
-                    tdJodi.innerText = "**";
-                } else {
-                    let redCheck = isRedJodi(jodi);
-                    tdJodi.className = `jodi-cell ${redCheck ? 'red' : 'normal'}`;
-                    tdJodi.innerText = jodi;
+        async function fetchAdminData() {
+            try {
+                let url = `${databaseURL}/history/${gameName}.json?t=${new Date().getTime()}`;
+                let response = await fetch(url);
+                if(response.ok) {
+                    let data = await response.json();
+                    if (data) {
+                        let sortedDates = Object.keys(data).sort();
+                        sortedDates.forEach(date => {
+                            let jodi = extractJodi(data[date].result);
+                            if(jodi) { allData.push(jodi); }
+                        });
+                    }
                 }
-                tr.appendChild(tdJodi);
-            });
+            } catch (error) { console.error("Firebase Error:", error); }
+            generateDynamicChart();
+        }
 
-            tbody.appendChild(tr);
+        function generateDynamicChart() {
+            const tbody = document.getElementById('auto-chart-body');
+            tbody.innerHTML = '';
+            for (let i = 0; i < allData.length; i += daysInWeek) {
+                let tr = document.createElement('tr');
+                let weekStart = new Date(startDate);
+                weekStart.setDate(weekStart.getDate() + (i / daysInWeek) * 7);
+                let weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekStart.getDate() + (daysInWeek - 1)); 
+                let startStr = ('0' + weekStart.getDate()).slice(-2) + '/' + ('0' + (weekStart.getMonth()+1)).slice(-2) + '/' + String(weekStart.getFullYear()).slice(-2);
+                let endStr = ('0' + weekEnd.getDate()).slice(-2) + '/' + ('0' + (weekEnd.getMonth()+1)).slice(-2) + '/' + String(weekEnd.getFullYear()).slice(-2);
+                let tdDate = document.createElement('td');
+                tdDate.className = 'date-col';
+                tdDate.innerHTML = startStr + '<br>to<br>' + endStr;
+                tr.appendChild(tdDate);
 
-            // अगले हफ्ते के लिए डेट को 7 दिन आगे बढ़ाना
-            currentDate.setDate(currentDate.getDate() + 7);
-        });
+                for (let j = 0; j < daysInWeek; j++) {
+                    let val = allData[i + j];
+                    let td = document.createElement('td');
+                    if (val === undefined || val === '' || val === '--') {
+                        td.innerText = '--'; td.className = 'jodi-cell dash';
+                    } else if (val === '**') {
+                        td.innerText = val; td.className = 'jodi-cell dash';
+                    } else {
+                        td.innerText = val;
+                        if (val.length === 2 && !isNaN(val)) {
+                            let diff = Math.abs(parseInt(val[0]) - parseInt(val[1]));
+                            td.className = (diff === 0 || diff === 5) ? 'jodi-cell red' : 'jodi-cell normal';
+                        } else { td.className = 'jodi-cell normal'; }
+                    }
+                    tr.appendChild(td);
+                }
+                tbody.appendChild(tr);
+            }
+        }
+        fetchAdminData();
     </script>
 </body>
 </html>
