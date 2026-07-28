@@ -68,15 +68,36 @@
         const databaseURL = "https://sbboss-75e3f-default-rtdb.firebaseio.com";
         const gameName = "royal-morning"; 
         const daysInWeek = 6; 
-        const startDate = new Date(2026, 4, 11); // आपका वाला 11/05/2026
+        const startDate = new Date(2025, 6, 7); // डेट फिक्स कर दी गई है!
         let allData = [...baseData]; 
 
+        // 🌟 यह है वो स्मार्ट फंक्शन जो 'WAITING' या 'LOADING' को चार्ट में जाने से रोकेगा
         function extractJodi(fullResult) {
-            if (!fullResult || fullResult === "**" || fullResult.includes("***")) return "**";
-            let parts = fullResult.split('-');
-            if (parts.length === 3) return parts[1]; 
-            if (parts.length === 1) return parts[0]; 
-            return fullResult; 
+            if (!fullResult) return null;
+            let text = fullResult.trim().toUpperCase();
+
+            // अगर टेक्स्ट में WAITING, LOADING, UPDATE जैसा कुछ भी है, तो रिजेक्ट कर दो (null)
+            if (text.includes("WAIT") || text.includes("LOAD") || text.includes("UPDATE") || text.includes("RESULT")) {
+                return null;
+            }
+
+            let jodi = "";
+            let parts = text.split('-');
+            
+            if (parts.length === 3) {
+                jodi = parts[1].trim(); // 120-45-123 में से 45 निकालेगा
+            } else if (parts.length === 1) {
+                jodi = parts[0].trim(); // 45 लिखा है तो 45 निकालेगा
+            } else {
+                return null; 
+            }
+
+            // पक्का चेक: क्या यह सिर्फ 2 अंकों का नंबर है (जैसे 05, 45) या "**" है?
+            if (/^\d{2}$/.test(jodi) || jodi === "**") {
+                return jodi; // सही नंबर है, चार्ट में जाने दो
+            }
+            
+            return null; // बाकी कूड़ा रिजेक्ट!
         }
 
         async function fetchAdminData() {
@@ -89,7 +110,10 @@
                         let sortedDates = Object.keys(data).sort();
                         sortedDates.forEach(date => {
                             let jodi = extractJodi(data[date].result);
-                            if(jodi) { allData.push(jodi); }
+                            // अगर jodi में सही नंबर आया है, तभी उसे चार्ट में जोड़ेंगे
+                            if(jodi !== null) { 
+                                allData.push(jodi); 
+                            }
                         });
                     }
                 }
