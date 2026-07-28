@@ -78,15 +78,14 @@
                     <th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th>
                 </tr>
             </thead>
-            <!-- एडमिन पैनल का डेटा और बॉक्स यहाँ जावास्क्रिप्ट (JS) द्वारा अपने आप जनरेट होंगे -->
             <tbody id="auto-chart-body">
+                <!-- डेटा Firebase से लोड हो रहा है -->
             </tbody>
         </table>
     </div>
 
     <script>
-        // 1. आपका पुराना सारा डेटा (Historical Data) 
-        // यहाँ कॉमा (,) लगाकर नंबर रखे गए हैं, आप बस सबसे नीचे नया नंबर जोड़ते जाना।
+        // आपका पुराना सारा डेटा (सोमवार 27 जुलाई 2026 तक का)
         const baseData = [
             "25","78","01","13","71","13","02",
             "53","47","68","19","79","26","45",
@@ -143,28 +142,65 @@
             "92","46","75","20","97","90","42",
             "97","22","75","60","63","74","39",
             "85","68","84","04","83","72","41",
-            "48" // <--- जब नया नंबर आए, तो यहाँ कॉमा (,) लगाकर अगला नंबर लिख देना
+            "48" // 27 जुलाई (सोमवार) का डेटा
         ];
 
-        // 2. एडमिन पैनल का डेटा (अगर लोकल स्टोरेज से आ रहा है)
-        let adminData = JSON.parse(localStorage.getItem('kalyanMorningAdminData')) || [];
-        let allData = baseData.concat(adminData);
+        // आपका लाइव डेटाबेस लिंक 
+        const databaseURL = "https://sbboss-75e3f-default-rtdb.firebaseio.com";
+        const gameName = "kalyan-morning"; // यह एडमिन पैनल से बिल्कुल मैच कर रहा है
 
-        // 3. तारीख और बॉक्स को ऑटोमैटिक बनाने का फंक्शन
+        let allData = [...baseData]; 
+
+        // 368-74-680 में से 74 निकालने का कोड
+        function extractJodi(fullResult) {
+            if (!fullResult || fullResult === "**" || fullResult.includes("***")) return "**";
+            let parts = fullResult.split('-');
+            if (parts.length === 3) return parts[1]; 
+            if (parts.length === 1) return parts[0]; 
+            return fullResult; 
+        }
+
+        // Firebase से लाइव रिज़ल्ट लाना (बिना Cache प्रॉब्लम के)
+        async function fetchAdminData() {
+            try {
+                // url के आखिर में ?t= लगाने से मोबाइल ब्राउज़र हमेशा नया रिज़ल्ट उठायेगा
+                let url = `${databaseURL}/history/${gameName}.json?t=${new Date().getTime()}`;
+                let response = await fetch(url);
+                
+                if(response.ok) {
+                    let data = await response.json();
+                    if (data) {
+                        let sortedDates = Object.keys(data).sort();
+                        sortedDates.forEach(date => {
+                            let fullResult = data[date].result;
+                            let jodi = extractJodi(fullResult);
+                            if(jodi) {
+                                allData.push(jodi); // नया रिज़ल्ट (74) डब्बे में जुड़ गया!
+                            }
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error("Firebase Error:", error);
+            }
+            generateDynamicChart();
+        }
+
+        // चार्ट जनरेट करना (7 दिन का गेम)
         function generateDynamicChart() {
             const tbody = document.getElementById('auto-chart-body');
             tbody.innerHTML = '';
             
-            for (let i = 0; i < allData.length; i += 7) {
+            let startDate = new Date(2025, 6, 7); 
+            let daysInWeek = 7; 
+
+            for (let i = 0; i < allData.length; i += daysInWeek) {
                 let tr = document.createElement('tr');
 
-                // शुरू होने की तारीख (07 जुलाई 2025)
-                // (साल, महीना 0 से शुरू होता है इसलिए 6, तारीख 7)
-                let weekStart = new Date(2025, 6, 7); 
-                weekStart.setDate(weekStart.getDate() + i); 
-                
+                let weekStart = new Date(startDate);
+                weekStart.setDate(weekStart.getDate() + (i / daysInWeek) * 7);
                 let weekEnd = new Date(weekStart);
-                weekEnd.setDate(weekStart.getDate() + 6);
+                weekEnd.setDate(weekStart.getDate() + (daysInWeek - 1)); 
 
                 let startStr = ('0' + weekStart.getDate()).slice(-2) + '/' + ('0' + (weekStart.getMonth()+1)).slice(-2) + '/' + String(weekStart.getFullYear()).slice(-2);
                 let endStr = ('0' + weekEnd.getDate()).slice(-2) + '/' + ('0' + (weekEnd.getMonth()+1)).slice(-2) + '/' + String(weekEnd.getFullYear()).slice(-2);
@@ -174,13 +210,11 @@
                 tdDate.innerHTML = startStr + '<br>to<br>' + endStr;
                 tr.appendChild(tdDate);
 
-                // 7 दिन के ऑटोमैटिक बॉक्स
-                for (let j = 0; j < 7; j++) {
+                for (let j = 0; j < daysInWeek; j++) {
                     let val = allData[i + j];
                     let td = document.createElement('td');
                     let span = document.createElement('span');
 
-                    // अगर नंबर नहीं है (हफ्ता पूरा नहीं हुआ) तो डब्बा खाली न रहे
                     if (val === undefined || val === '' || val === '--') {
                         span.innerText = '--';
                         span.className = 'dash-num';
@@ -189,8 +223,6 @@
                         span.className = 'red-num';
                     } else {
                         span.innerText = val;
-                        
-                        // ऑटोमैटिक रेड जोड़ी (Red Jodi) पकड़ने का पक्का लॉजिक
                         if (val.length === 2 && !isNaN(val)) {
                             let diff = Math.abs(parseInt(val[0]) - parseInt(val[1]));
                             if (diff === 0 || diff === 5) {
@@ -209,8 +241,8 @@
             }
         }
 
-        // चार्ट को लोड करना
-        generateDynamicChart();
+        // पेज लोड होते ही Firebase से डेटा मंगाना शुरू
+        fetchAdminData();
     </script>
 
 </body>
