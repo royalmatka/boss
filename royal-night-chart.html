@@ -15,7 +15,6 @@
             padding: 5px;
             text-align: center;
         }
-        /* चार्ट का नाम (Title) */
         h2.chart-title {
             color: #800080;
             margin-top: 15px;
@@ -32,7 +31,7 @@
             border-collapse: collapse;
             margin: 0 auto;
             background-color: #ffffff !important;
-            border: 2px solid #800080 !important; /* पर्पल बॉर्डर */
+            border: 2px solid #800080 !important;
         }
         th, td {
             border: 1px solid #800080 !important;
@@ -56,15 +55,12 @@
             padding: 4px 1px;
             vertical-align: middle;
         }
-        /* नॉर्मल नंबर (सिर्फ काले) */
         .normal-num {
             color: #000000 !important;
         }
-        /* रेड जोड़ी (सिर्फ लाल) */
         .red-num {
             color: #ff0000 !important;
         }
-        /* डैश और खाली जगह */
         .dash-num {
             color: #000000 !important;
         }
@@ -72,7 +68,6 @@
 </head>
 <body>
 
-    <!-- सबसे ऊपर चार्ट का नाम -->
     <h2 class="chart-title">Royal Night Chart</h2>
 
     <div class="table-container">
@@ -95,7 +90,7 @@
     </div>
 
     <script>
-        // 1. आपका पूरा डेटा (Royal Night - 6 Days a week)
+        // 1. आपका पुराना सारा डेटा
         const baseData = [
             "18","60","51","64","49","33",
             "78","04","52","11","91","43",
@@ -149,33 +144,62 @@
             "10","37","64","37","58","95",
             "94","12","61","73","78","87",
             "23","34","40","11","01","67",
-            "78","85","99","52","28","59" // <--- जब नया नंबर आए, तो यहाँ कॉमा (,) लगाकर अगला नंबर लिख देना
+            "78","85","99","52","28","59"
         ];
 
-        // 2. एडमिन पैनल का डेटाबेस नाम (Royal Night के लिए खास नाम 'royalNightAdminData')
-        let adminData = JSON.parse(localStorage.getItem('royalNightAdminData')) || [];
-        let allData = baseData.concat(adminData);
+        // 2. Firebase Database Link & Game Name 
+        const databaseURL = "https://sbboss-75e3f-default-rtdb.firebaseio.com";
+        const gameName = "royal-night"; // एडमिन पैनल में यही नाम है
 
-        // 3. 6-दिन वाले चार्ट का ऑटोमैटिक जनरेटर
+        let allData = [...baseData];
+
+        // एडमिन पैनल के रिजल्ट (120-45-123) में से बीच की जोड़ी (45) निकालना
+        function extractJodi(fullResult) {
+            if (!fullResult || fullResult === "**" || fullResult.includes("***")) return "**";
+            let parts = fullResult.split('-');
+            if (parts.length === 3) return parts[1]; // अगर 120-45-123 है तो 45 लेगा
+            if (parts.length === 1) return parts[0]; // अगर सीधा 45 डाला है तो 45 लेगा
+            return fullResult; 
+        }
+
+        // 3. Firebase से लाइव डेटा मंगाना
+        async function fetchAdminData() {
+            try {
+                let response = await fetch(`${databaseURL}/history/${gameName}.json`);
+                let data = await response.json();
+
+                if (data) {
+                    let sortedDates = Object.keys(data).sort();
+                    sortedDates.forEach(date => {
+                        let fullResult = data[date].result;
+                        let jodi = extractJodi(fullResult);
+                        if(jodi) {
+                            allData.push(jodi); // नया रिज़ल्ट चार्ट की लिस्ट में अपने आप जोड़ देगा
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error("Firebase Connection Error:", error);
+            }
+            // डेटा आने के बाद चार्ट बनाएगा
+            generateDynamicChart();
+        }
+
+        // 4. चार्ट का डब्बा और रंग बनाने का सिस्टम (6 दिन का गेम)
         function generateDynamicChart() {
             const tbody = document.getElementById('auto-chart-body');
             tbody.innerHTML = '';
             
-            // शुरू होने की तारीख (07 जुलाई 2025)
-            // (महीना 0 से शुरू होता है इसलिए जुलाई = 6)
             let startDate = new Date(2025, 6, 7); 
+            let daysInWeek = 6; 
 
-            // लूप को 6-6 दिन के हिसाब से चलाया है (क्योंकि यह 6 दिन का गेम है)
-            for (let i = 0; i < allData.length; i += 6) {
+            for (let i = 0; i < allData.length; i += daysInWeek) {
                 let tr = document.createElement('tr');
 
-                // ऑटोमैटिक डेट (Date) बनाना
                 let weekStart = new Date(startDate);
-                weekStart.setDate(weekStart.getDate() + (i / 6) * 7);
+                weekStart.setDate(weekStart.getDate() + (i / daysInWeek) * 7);
                 let weekEnd = new Date(weekStart);
-                
-                // 6 दिन के गेम में हफ्ता शनिवार को खत्म होता है, इसलिए +5 दिन जोड़े हैं
-                weekEnd.setDate(weekStart.getDate() + 5); 
+                weekEnd.setDate(weekStart.getDate() + (daysInWeek - 1)); 
 
                 let startStr = ('0' + weekStart.getDate()).slice(-2) + '/' + ('0' + (weekStart.getMonth()+1)).slice(-2) + '/' + String(weekStart.getFullYear()).slice(-2);
                 let endStr = ('0' + weekEnd.getDate()).slice(-2) + '/' + ('0' + (weekEnd.getMonth()+1)).slice(-2) + '/' + String(weekEnd.getFullYear()).slice(-2);
@@ -185,8 +209,7 @@
                 tdDate.innerHTML = startStr + '<br>to<br>' + endStr;
                 tr.appendChild(tdDate);
 
-                // सोमवार से शनिवार (6 दिन) के बॉक्स
-                for (let j = 0; j < 6; j++) {
+                for (let j = 0; j < daysInWeek; j++) {
                     let val = allData[i + j];
                     let td = document.createElement('td');
                     let span = document.createElement('span');
@@ -199,7 +222,8 @@
                         span.className = 'red-num';
                     } else {
                         span.innerText = val;
-                        // ऑटोमैटिक रेड जोड़ी (0 या 5 का अंतर) पकड़ने का लॉजिक
+                        
+                        // रेड जोड़ी चेक 
                         if (val.length === 2 && !isNaN(val)) {
                             let diff = Math.abs(parseInt(val[0]) - parseInt(val[1]));
                             if (diff === 0 || diff === 5) {
@@ -218,8 +242,8 @@
             }
         }
 
-        // चार्ट को लोड करना
-        generateDynamicChart();
+        // पेज खुलते ही Firebase से डेटा मंगवाएगा
+        fetchAdminData();
     </script>
 
 </body>
