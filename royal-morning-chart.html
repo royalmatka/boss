@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Royal Morning Chart</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #ffffff !important; margin: 0; padding: 5px; text-align: center; }
+        h2.chart-title { color: #800080; margin-top: 15px; margin-bottom: 15px; font-size: 24px; font-weight: bold; text-transform: uppercase; }
+        .table-container { width: 100%; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin: 0 auto; background-color: #ffffff !important; border: 2px solid #800080 !important; }
+        th, td { border: 1px solid #800080 !important; padding: 8px 2px; font-size: 17px; text-align: center; font-weight: 900; background-color: #ffffff !important; }
+        th { background-color: #f8f9fa !important; color: #800080; font-size: 14px; text-transform: uppercase; }
+        .date-col { color: #333333 !important; font-size: 10px; font-weight: bold; width: 60px; line-height: 1.2; padding: 4px 1px; vertical-align: middle; }
+        .normal-num { color: #000000 !important; }
+        .red-num { color: #ff0000 !important; }
+        .dash-num { color: #000000 !important; }
+    </style>
+</head>
+<body>
+    <h2 class="chart-title">Royal Morning Chart</h2>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th>
+                </tr>
+            </thead>
+            <tbody id="auto-chart-body"></tbody>
+        </table>
+    </div>
+
+    <script>
+        const baseData = [
+            "95", "12", "13", "72", "05", "06", "28", "98", "69", "36", "24", "66",
+            "28", "54", "83", "99", "64", "83", "60", "10", "44", "74", "54", "58",
+            "22", "03", "98", "45", "77", "05", "31", "87", "37", "18", "42", "78",
+            "70", "73", "60", "89", "93", "87", "87", "86", "42", "01", "88", "91",
+            "38", "18", "80", "63", "53", "44", "13", "15", "60", "13", "09", "67",
+            "38", "09", "00", "25", "21", "09", "54", "43", "84", "42", "59", "32",
+            "74", "26", "19", "91", "48", "70", "04", "73", "95", "87", "95", "43",
+            "21", "38", "14", "86", "93", "46", "**", "**", "**", "**", "**", "**",
+            "87", "30", "94", "00", "87", "44", "28", "05", "87", "19", "81", "16",
+            "74", "80", "70", "32", "99", "04", "39", "03", "25", "09", "94", "84",
+            "70", "12", "30", "33", "71", "03", "88", "16", "44", "21", "05", "47",
+            "73", "36", "43", "76", "28", "31", "40", "65", "34", "38", "31", "69",
+            "31", "73", "90", "64", "53", "67", "30", "89", "22", "88", "34", "59",
+            "91", "01", "62", "48", "66", "67", "99", "62", "00", "03", "58", "07",
+            "77", "74", "57", "51", "99", "65", "**", "32", "39", "85", "22", "56",
+            "83", "20", "83", "07", "77", "97", "23", "08", "26", "41", "32", "43",
+            "62", "33", "92", "94", "79", "93", "40", "46", "06", "90", "74", "76",
+            "68", "87", "**", "69", "84", "53", "68", "53", "02", "20", "36", "25",
+            "01", "97", "54", "06", "92", "81", "80", "30", "43", "43", "39", "83",
+            "48", "37", "09", "52", "25", "95", "17", "21", "52", "15", "18", "39",
+            "18", "85", "10", "28", "90", "20", "72", "84", "39", "86", "62", "38",
+            "42", "50", "94", "82", "46", "81", "84", "68", "27", "99", "57", "17",
+            "67", "44", "76", "60", "66", "00", "97", "51", "68", "66", "40", "12",
+            "04", "59", "64", "23", "27", "87", "04", "01", "66", "40", "17", "77",
+            "08", "58", "10", "08", "65", "51", "95", "73", "13", "00", "38", "28",
+            "73", "58", "83", "**", "**", "**", "57", "**", "**", "**", "**", "00",
+            "15", "85", "25", "**", "82", "**", "67", "42", "14", "89", "14", "94",
+            "52", "05", "39", "75", "06", "24"
+        ];
+
+        const databaseURL = "https://sbboss-75e3f-default-rtdb.firebaseio.com";
+        const gameName = "royal-morning"; 
+        const daysInWeek = 6; 
+        const startDate = new Date(2025, 6, 7); 
+        let allData = [...baseData]; 
+
+        function extractJodi(fullResult) {
+            if (!fullResult) return null;
+            let text = fullResult.trim().toUpperCase();
+            if (text.includes("WAIT") || text.includes("LOAD") || text.includes("UPDATE") || text.includes("RESULT")) return null;
+            let jodi = "";
+            let parts = text.split('-');
+            if (parts.length === 3) { jodi = parts[1].trim(); } 
+            else if (parts.length === 2) { jodi = parts[1].trim(); } 
+            else if (parts.length === 1) { jodi = parts[0].trim(); } 
+            else { return null; }
+            if (/^\d{1,2}$/.test(jodi) || jodi === "**") return jodi;
+            return null;
+        }
+
+        function getExactBoxIndex(dateString) {
+            let parts = dateString.split('-');
+            let d = new Date(parts[0], parts[1]-1, parts[2]);
+            let start = new Date(startDate);
+            d.setHours(0,0,0,0); start.setHours(0,0,0,0);
+            let diffTime = d - start;
+            let diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            if (diffDays < 0) return -1;
+            let weeksPassed = Math.floor(diffDays / 7);
+            let dayOfWeek = d.getDay(); 
+            let dayIndex = (dayOfWeek === 0) ? 6 : dayOfWeek - 1;
+            if (dayIndex >= daysInWeek) return -1;
+            return (weeksPassed * daysInWeek) + dayIndex;
+        }
+
+        async function fetchAdminData() {
+            try {
+                let url = `${databaseURL}/history/${gameName}.json?t=${new Date().getTime()}`;
+                let response = await fetch(url);
+                if(response.ok) {
+                    let data = await response.json();
+                    if (data) {
+                        let sortedDates = Object.keys(data).sort();
+                        sortedDates.forEach(date => {
+                            let jodi = extractJodi(data[date].result);
+                            if(jodi !== null) { 
+                                let exactIndex = getExactBoxIndex(date);
+                                if (exactIndex !== -1) {
+                                    while (allData.length <= exactIndex) { allData.push("--"); }
+                                    allData[exactIndex] = jodi; 
+                                }
+                            }
+                        });
+                    }
+                }
+            } catch (error) { console.error("Firebase Error:", error); }
+            generateDynamicChart();
+        }
+
+        function generateDynamicChart() {
+            const tbody = document.getElementById('auto-chart-body');
+            tbody.innerHTML = '';
+            for (let i = 0; i < allData.length; i += daysInWeek) {
+                let tr = document.createElement('tr');
+                let weekStart = new Date(startDate);
+                weekStart.setDate(weekStart.getDate() + (i / daysInWeek) * 7);
+                let weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekStart.getDate() + (daysInWeek - 1)); 
+                let startStr = ('0' + weekStart.getDate()).slice(-2) + '/' + ('0' + (weekStart.getMonth()+1)).slice(-2) + '/' + String(weekStart.getFullYear()).slice(-2);
+                let endStr = ('0' + weekEnd.getDate()).slice(-2) + '/' + ('0' + (weekEnd.getMonth()+1)).slice(-2) + '/' + String(weekEnd.getFullYear()).slice(-2);
+                
+                let tdDate = document.createElement('td');
+                tdDate.className = 'date-col';
+                tdDate.innerHTML = startStr + '<br>to<br>' + endStr;
+                tr.appendChild(tdDate);
+
+                for (let j = 0; j < daysInWeek; j++) {
+                    let val = allData[i + j];
+                    let td = document.createElement('td');
+                    let span = document.createElement('span');
+                    
+                    if (val === undefined || val === '' || val === '--') {
+                        span.innerText = '--'; span.className = 'dash-num';
+                    } else if (val === '**') {
+                        span.innerText = val; span.className = 'red-num';
+                    } else {
+                        span.innerText = (val.length === 1) ? "0" + val : val;
+                        if (span.innerText.length === 2 && !isNaN(span.innerText)) {
+                            let diff = Math.abs(parseInt(span.innerText[0]) - parseInt(span.innerText[1]));
+                            span.className = (diff === 0 || diff === 5) ? 'red-num' : 'normal-num';
+                        } else { span.className = 'normal-num'; }
+                    }
+                    td.appendChild(span);
+                    tr.appendChild(td);
+                }
+                tbody.appendChild(tr);
+            }
+        }
+        fetchAdminData();
+    </script>
+</body>
+</html>

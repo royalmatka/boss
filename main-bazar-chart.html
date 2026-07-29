@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Main Bazar Chart</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #ffffff !important; margin: 0; padding: 5px; text-align: center; }
+        h2.chart-title { color: #800080; margin-top: 15px; margin-bottom: 15px; font-size: 24px; font-weight: bold; text-transform: uppercase; }
+        .table-container { width: 100%; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin: 0 auto; background-color: #ffffff !important; border: 2px solid #800080 !important; }
+        th, td { border: 1px solid #800080 !important; padding: 8px 2px; font-size: 17px; text-align: center; font-weight: 900; background-color: #ffffff !important; }
+        th { background-color: #f8f9fa !important; color: #800080; font-size: 14px; text-transform: uppercase; }
+        .date-col { color: #333333 !important; font-size: 10px; font-weight: bold; width: 60px; line-height: 1.2; padding: 4px 1px; vertical-align: middle; }
+        .normal-num { color: #000000 !important; }
+        .red-num { color: #ff0000 !important; }
+        .dash-num { color: #000000 !important; }
+    </style>
+</head>
+<body>
+    <h2 class="chart-title">Main Bazar Chart</h2>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th>
+                </tr>
+            </thead>
+            <tbody id="auto-chart-body"></tbody>
+        </table>
+    </div>
+
+    <script>
+        const baseData = [
+            "83","46","62","32","49", "14","21","79","69","13", "52","45","59","78","87", "13","73","25","36","15",
+            "97","60","40","94","46", "77","55","96","04","**", "76","71","14","50","76", "51","83","57","51","87",
+            "54","44","37","23","30", "47","42","86","91","51", "09","93","15","59","19", "83","31","93","03","17",
+            "04","62","14","66","52", "19","68","88","66","74", "00","94","47","88","49", "**","**","**","**","**",
+            "85","59","66","12","47", "11","86","94","72","79", "04","37","36","25","25", "44","20","66","72","76",
+            "92","84","81","65","46", "82","14","65","70","59", "07","05","05","78","28", "77","79","34","03","90",
+            "71","81","15","39","06", "67","34","54","63","65", "01","04","21","47","48", "63","37","20","45","02",
+            "71","56","80","12","45", "**","30","53","47","57", "97","21","61","67","80", "99","80","96","86","80",
+            "85","85","54","68","39", "32","82","32","64","76", "99","43","**","49","59", "94","20","23","79","72",
+            "11","25","60","43","55", "41","94","80","13","26", "49","26","67","57","31", "92","91","65","98","91",
+            "23","51","53","32","62", "65","03","66","57","51", "95","33","54","07","88", "96","77","**","41","56",
+            "61","29","80","28","64", "44","68","11","00","98", "02","49","17","93","81", "17","01","12","27","51",
+            "43","18","62","43","78", "11","84","77","96","43", "39","29","40","08","65", "38","36","54","35","59",
+            "80","02","81","84","81", "51","00","25","72","04", "42","72","71","13","24"
+        ];
+
+        const databaseURL = "https://sbboss-75e3f-default-rtdb.firebaseio.com";
+        const gameName = "main-bazar"; 
+        const daysInWeek = 5; 
+        const startDate = new Date(2025, 6, 7); 
+        let allData = [...baseData]; 
+
+        function extractJodi(fullResult) {
+            if (!fullResult) return null;
+            let text = fullResult.trim().toUpperCase();
+            if (text.includes("WAIT") || text.includes("LOAD") || text.includes("UPDATE") || text.includes("RESULT")) return null;
+            let jodi = "";
+            let parts = text.split('-');
+            if (parts.length === 3) { jodi = parts[1].trim(); } 
+            else if (parts.length === 2) { jodi = parts[1].trim(); } 
+            else if (parts.length === 1) { jodi = parts[0].trim(); } 
+            else { return null; }
+            if (/^\d{1,2}$/.test(jodi) || jodi === "**") return jodi;
+            return null;
+        }
+
+        function getExactBoxIndex(dateString) {
+            let parts = dateString.split('-');
+            let d = new Date(parts[0], parts[1]-1, parts[2]);
+            let start = new Date(startDate);
+            d.setHours(0,0,0,0); start.setHours(0,0,0,0);
+            let diffTime = d - start;
+            let diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            if (diffDays < 0) return -1;
+            let weeksPassed = Math.floor(diffDays / 7);
+            let dayOfWeek = d.getDay(); 
+            let dayIndex = (dayOfWeek === 0) ? 6 : dayOfWeek - 1;
+            if (dayIndex >= daysInWeek) return -1;
+            return (weeksPassed * daysInWeek) + dayIndex;
+        }
+
+        async function fetchAdminData() {
+            try {
+                let url = `${databaseURL}/history/${gameName}.json?t=${new Date().getTime()}`;
+                let response = await fetch(url);
+                if(response.ok) {
+                    let data = await response.json();
+                    if (data) {
+                        let sortedDates = Object.keys(data).sort();
+                        sortedDates.forEach(date => {
+                            let jodi = extractJodi(data[date].result);
+                            if(jodi !== null) { 
+                                let exactIndex = getExactBoxIndex(date);
+                                if (exactIndex !== -1) {
+                                    while (allData.length <= exactIndex) { allData.push("--"); }
+                                    allData[exactIndex] = jodi; 
+                                }
+                            }
+                        });
+                    }
+                }
+            } catch (error) { console.error("Firebase Error:", error); }
+            generateDynamicChart();
+        }
+
+        function generateDynamicChart() {
+            const tbody = document.getElementById('auto-chart-body');
+            tbody.innerHTML = '';
+            for (let i = 0; i < allData.length; i += daysInWeek) {
+                let tr = document.createElement('tr');
+                let weekStart = new Date(startDate);
+                weekStart.setDate(weekStart.getDate() + (i / daysInWeek) * 7);
+                let weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekStart.getDate() + (daysInWeek - 1)); 
+                let startStr = ('0' + weekStart.getDate()).slice(-2) + '/' + ('0' + (weekStart.getMonth()+1)).slice(-2) + '/' + String(weekStart.getFullYear()).slice(-2);
+                let endStr = ('0' + weekEnd.getDate()).slice(-2) + '/' + ('0' + (weekEnd.getMonth()+1)).slice(-2) + '/' + String(weekEnd.getFullYear()).slice(-2);
+                
+                let tdDate = document.createElement('td');
+                tdDate.className = 'date-col';
+                tdDate.innerHTML = startStr + '<br>to<br>' + endStr;
+                tr.appendChild(tdDate);
+
+                for (let j = 0; j < daysInWeek; j++) {
+                    let val = allData[i + j];
+                    let td = document.createElement('td');
+                    let span = document.createElement('span');
+                    
+                    if (val === undefined || val === '' || val === '--') {
+                        span.innerText = '--'; span.className = 'dash-num';
+                    } else if (val === '**') {
+                        span.innerText = val; span.className = 'red-num';
+                    } else {
+                        span.innerText = val;
+                        if (val.length === 2 && !isNaN(val)) {
+                            let diff = Math.abs(parseInt(val[0]) - parseInt(val[1]));
+                            span.className = (diff === 0 || diff === 5) ? 'red-num' : 'normal-num';
+                        } else { span.className = 'normal-num'; }
+                    }
+                    td.appendChild(span);
+                    tr.appendChild(td);
+                }
+                tbody.appendChild(tr);
+            }
+        }
+        fetchAdminData();
+    </script>
+</body>
+</html>
